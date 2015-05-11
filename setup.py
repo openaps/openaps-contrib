@@ -11,7 +11,7 @@ requires = ['openaps>=0.0.0']
 
 setup(
     name='openaps-contrib',
-    version='0.0.1',
+    version='0.0.2',
     url='http://github.com/openaps/openaps-contrib',
     download_url='http://pypi.python.org/pypi/openaps-contrib',
     license='BSD',
