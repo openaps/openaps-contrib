@@ -1,0 +1,4 @@
+openaps.egg-info/
+*.egg-info/
+*.pyc
+.*.sw?
