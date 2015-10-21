@@ -1,4 +1,6 @@
 openaps.egg-info/
-*.egg-info/
 *.pyc
 .*.sw?
+build/
+dist/
+*.egg-info/
