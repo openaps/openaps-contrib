@@ -27,7 +27,8 @@ class ConvertInput (Use):
     params = self.get_params(args)
     now = datetime.now( ).replace(tzinfo=args.timezone)
     params['timezone'] = now.tzname( )
-    params['date'] = ' '.join(args.date)
+    if args.date:
+      params['date'] = ' '.join(args.date)
     return params
   def from_ini (self, fields):
     fields['date'] = fields['date'].split(' ')
