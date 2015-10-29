@@ -10,6 +10,7 @@ import json
 import argparse
 from dateutil.tz import gettz
 from dateutil.parser import parse
+from datetime import datetime
 
 def set_config (args, device):
   return device
@@ -22,12 +23,30 @@ use = Registry( )
 
 class ConvertInput (Use):
   FIELDNAME = ['date']
+  def to_ini (self, args):
+    params = self.get_params(args)
+    now = datetime.now( ).replace(tzinfo=args.timezone)
+    params['timezone'] = now.tzname( )
+    if args.date:
+      params['date'] = ' '.join(args.date)
+    return params
+  def from_ini (self, fields):
+    fields['date'] = fields['date'].split(' ')
+    zone = fields.get('timezone', None)
+    if zone in ['None',  None]:
+      zone = gettz( )
+    else:
+      zone = gettz(zone)
+    fields['timezone'] = zone
+    fields['astimezone'] = fields.get('astimezone', False) is 'True'
+    return fields
   def get_params (self, args):
-    return dict(input=args.input, timezone=args.timezone, adjust=args.adjust, field=args.field)
+    return dict(input=args.input, timezone=args.timezone, adjust=args.adjust, date=args.date, astimezone=args.astimezone)
   def configure_app (self, app, parser):
     parser.add_argument('--timezone','-z', default=gettz( ), type=gettz)
     parser.add_argument('--adjust','-a', default='missing', choices=['missing', 'replace'])
-    parser.add_argument('--field','-f', action='append', default=self.FIELDNAME)
+    parser.add_argument('--date','-d', action='append', default=self.FIELDNAME)
+    parser.add_argument('--astimezone','-r', action='store_true',  default=False)
     parser.add_argument('input', default='-')
   def get_program (self, args):
     params = self.get_params(args)
@@ -35,13 +54,16 @@ class ConvertInput (Use):
     return program
   def set_converter (self, args):
     params = self.get_params(args)
-    self.FIELDNAME = params.get('field')
+    self.FIELDNAME = params.get('date')
     self.adjust = params.get('adjust')
     self.timezone = params.get('timezone')
+    self.astimezone = params.get('astimezone')
 
   def rezone (self, dt):
     if (self.adjust == 'missing' and dt.tzinfo == None) or self.adjust == 'replace':
-      return dt.replace(tzinfo=self.timezone)
+      dt = dt.replace(tzinfo=self.timezone) # .astimezone(self.timezone)
+    if self.astimezone:
+      dt = dt.astimezone(self.timezone)
     return dt
   def range (self, program):
     return [ program ]
@@ -85,9 +107,9 @@ class glucose (ConvertInput):
 @use( )
 class rezone (glucose):
   """
-    Manage timezones on glucose times.
+    Manage how timezones are expressed in data.
   """
-  FIELDNAME = ['timestamp', 'dateString', 'start_at', 'end_at', 'created_at']
+  FIELDNAME = ['timestamp', 'dateString', 'start_at', 'end_at', 'created_at' ]
 
 
 def get_uses (device, config):
