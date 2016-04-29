@@ -7,14 +7,14 @@ This package is a virtual namespace for openaps.contrib modules.
 
 '''
 
-requires = ['openaps>=0.0.0']
+requires = [ ]
 
 setup(
     name='openaps-contrib',
     version='0.0.4',
     url='http://github.com/openaps/openaps-contrib',
     download_url='http://pypi.python.org/pypi/openaps-contrib',
-    license='BSD',
+    license='MIT',
     author='Ben West',
     author_email='bewest+openaps@gmail.com',
     description='openaps contrib namespace package',
