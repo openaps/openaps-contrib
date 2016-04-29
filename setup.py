@@ -11,7 +11,7 @@ requires = [ ]
 
 setup(
     name='openaps-contrib',
-    version='0.0.4',
+    version='0.0.6',
     url='http://github.com/openaps/openaps-contrib',
     download_url='http://pypi.python.org/pypi/openaps-contrib',
     license='MIT',
@@ -25,7 +25,7 @@ setup(
         'Environment :: Console',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: BSD License',
+        'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Topic :: Documentation',
