@@ -28,13 +28,16 @@ class ConvertInput (Use):
     params = self.get_params(args)
     now = datetime.now( ).replace(tzinfo=args.timezone)
     params['timezone'] = now.tzname( )
+    if args.timezone._filename == '/etc/localtime':
+      params['timezone'] = ''
+
     if args.date:
       params['date'] = ' '.join(args.date)
     return params
   def from_ini (self, fields):
     fields['date'] = fields['date'].split(' ')
     zone = fields.get('timezone', None)
-    if zone in ['None',  None]:
+    if zone in ['None',  None, '']:
       zone = gettz( )
     else:
       zone = gettz(zone)
