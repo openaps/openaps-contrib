@@ -138,7 +138,8 @@ def parse_datetime (candidate):
 @use( )
 class lsgaps (Use):
   def configure_app (self, app, parser):
-    parser.add_argument('input', nargs='?', default=None)
+    parser.add_argument('input', nargs=argparse.REMAINDER, default=None)
+    # parser.add_argument('input', nargs='?', default=None)
     parser.add_argument('--minutes', type=float, default=10)
     parser.add_argument('--date',  default='display_time')
     parser.add_argument('--before',  default=None)
@@ -151,33 +152,47 @@ class lsgaps (Use):
     params = self.get_params(args)
     for x in params.keys( ):
       setattr(args, x, params[x])
-    data = json.load(argparse.FileType('r')(params.get('input')))
     gaps = [ ]
-    # tz = gettz(args.timezone)
+    all_data = [ ]
+    def get (item):
+      return parse(item.get(args.date))
+
     tz = None
     if not args.no_timezone:
       tz = gettz(args.timezone)
-    def get (item):
-      return parse(item.get(args.date))
     if args.before:
       dt = parse_datetime(args.before).replace(tzinfo=tz)
       if tz:
         dt = dt.astimezone(tz)
       before = {args.date: dt.isoformat( )}
-      data.insert(0, before)
+      all_data.insert(0, before)
+    # if gaps: data.extend(gaps)
+
+
+    for stream in params.get('input'):
+      data = json.load(argparse.FileType('r')(stream))
+      # data = json.load(argparse.FileType('r')(params.get('input')))
+
+
+
+      data = sorted(data, key=get)
+      all_data.extend(data)
     if args.after:
       dt = parse_datetime(args.after).replace(tzinfo=tz)
       if tz:
         dt = dt.astimezone(tz)
       after = {args.date: dt.isoformat( )}
-      data.append(after)
-    data = sorted(data, key=get)
-    for (prev, item, then) in previous_and_next(data):
+      all_data.append(after)
+
+    all_data = sorted(all_data, key=get)
+    for (prev, item, then) in previous_and_next(all_data):
       if prev:
         delta = get(item) - get(prev)
         # print delta.total_seconds( ), "PREV", get(prev), "ITEM", get(item)
         if delta.total_seconds( ) > args.minutes * 60:
-          gaps.append(dict(prev=prev[args.date], current=item[args.date], delta=delta.total_seconds( )))
+          found = dict(prev=prev[args.date], current=item[args.date], delta=delta.total_seconds( ))
+          found[args.date] = found['current']
+          gaps.append(found)
 
       date = item[args.date]
     return gaps
