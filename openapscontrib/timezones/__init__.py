@@ -126,12 +126,25 @@ def previous_and_next(some_iterable):
   nexts = chain(islice(nexts, 1, None), [None])
   return izip(prevs, items, nexts)
 
+import recurrent
+import logging
+logging.getLogger('recurrent').setLevel(logging.CRITICAL)
+def parse_datetime (candidate):
+  try:
+    return parse(candidate)
+  except (ValueError), e:
+    return recurrent.parse(candidate)
+
 @use( )
 class lsgaps (Use):
   def configure_app (self, app, parser):
     parser.add_argument('input', nargs='?', default=None)
     parser.add_argument('--minutes', type=float, default=10)
     parser.add_argument('--date',  default='display_time')
+    parser.add_argument('--before',  default=None)
+    parser.add_argument('--after',  default=None)
+    parser.add_argument('--timezone','-z', default=None)
+    parser.add_argument('--no-timezone', action='store_true', default=False)
   def get_params (self, args):
     return dict(input=args.input, minutes=args.minutes, date=args.date)
   def main (self, args, app):
@@ -140,8 +153,24 @@ class lsgaps (Use):
       setattr(args, x, params[x])
     data = json.load(argparse.FileType('r')(params.get('input')))
     gaps = [ ]
+    # tz = gettz(args.timezone)
+    tz = None
+    if not args.no_timezone:
+      tz = gettz(args.timezone)
     def get (item):
       return parse(item.get(args.date))
+    if args.before:
+      dt = parse_datetime(args.before).replace(tzinfo=tz)
+      if tz:
+        dt = dt.astimezone(tz)
+      before = {args.date: dt.isoformat( )}
+      data.insert(0, before)
+    if args.after:
+      dt = parse_datetime(args.after).replace(tzinfo=tz)
+      if tz:
+        dt = dt.astimezone(tz)
+      after = {args.date: dt.isoformat( )}
+      data.append(after)
     data = sorted(data, key=get)
     for (prev, item, then) in previous_and_next(data):
       if prev:
