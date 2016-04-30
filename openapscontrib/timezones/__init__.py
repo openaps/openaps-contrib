@@ -11,6 +11,7 @@ import argparse
 from dateutil.tz import gettz
 from dateutil.parser import parse
 from datetime import datetime
+from itertools import tee, islice, chain, izip
 
 def set_config (args, device):
   return device
@@ -110,6 +111,44 @@ class rezone (glucose):
     Manage how timezones are expressed in data.
   """
   FIELDNAME = ['timestamp', 'dateString', 'start_at', 'end_at', 'created_at' ]
+
+
+
+
+def previous_and_next(some_iterable):
+  # very clever
+  # http://stackoverflow.com/questions/1011938/python-previous-and-next-values-inside-a-loop
+  prevs, items, nexts = tee(some_iterable, 3)
+  prevs = chain([None], prevs)
+  nexts = chain(islice(nexts, 1, None), [None])
+  return izip(prevs, items, nexts)
+
+@use( )
+class lsgaps (Use):
+  def configure_app (self, app, parser):
+    parser.add_argument('input', nargs='?', default=None)
+    parser.add_argument('--minutes', type=float, default=10)
+    parser.add_argument('--date',  default='display_time')
+  def get_params (self, args):
+    return dict(input=args.input, minutes=args.minutes, date=args.date)
+  def main (self, args, app):
+    params = self.get_params(args)
+    for x in params.keys( ):
+      setattr(args, x, params[x])
+    data = json.load(argparse.FileType('r')(params.get('input')))
+    gaps = [ ]
+    def get (item):
+      return parse(item.get(args.date))
+    data = sorted(data, key=get)
+    for (prev, item, then) in previous_and_next(data):
+      if prev:
+        delta = get(item) - get(prev)
+        # print delta.total_seconds( ), "PREV", get(prev), "ITEM", get(item)
+        if delta.total_seconds( ) > args.minutes * 60:
+          gaps.append(dict(prev=prev[args.date], current=item[args.date], delta=delta.total_seconds( )))
+
+      date = item[args.date]
+    return gaps
 
 
 def get_uses (device, config):
