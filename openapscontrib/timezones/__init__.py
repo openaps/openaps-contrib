@@ -173,10 +173,9 @@ class lsgaps (Use):
       data = json.load(argparse.FileType('r')(stream))
       # data = json.load(argparse.FileType('r')(params.get('input')))
 
-
-
       data = sorted(data, key=get)
       all_data.extend(data)
+
     if args.after:
       dt = parse_datetime(args.after).replace(tzinfo=tz)
       if tz:
@@ -197,6 +196,125 @@ class lsgaps (Use):
       date = item[args.date]
     return gaps
 
+
+@use( )
+class select (Use):
+  """ select some data out of a timeseries
+  """
+  def configure_app (self, app, parser):
+    parser.add_argument('input', nargs=argparse.REMAINDER, default=None)
+    # parser.add_argument('--minutes', type=float, default=10)
+    parser.add_argument('--date',  default='display_time')
+    parser.add_argument('--current',  default='now')
+    parser.add_argument('--prev',  default=None)
+    parser.add_argument('--gaps',  default=None)
+    parser.add_argument('--timezone','-z', default=None)
+    parser.add_argument('--no-timezone', action='store_true', default=False)
+
+  def to_ini (self, args):
+    params = self.get_params(args)
+    params['input'] = args.input.join(' ')
+    for field in params.keys( ):
+      if params[field] is None:
+        params[field] = ''
+    return params
+  def from_ini (self, fields):
+    if 'input' in fields:
+      fields['input'] = fields['input'].split(' ')
+    for field in fields:
+      if fields[field] in ['', None]:
+        fields[field] = None
+    return fields
+  def get_params (self, args):
+    return dict(input=args.input, timezone=args.timezone, no_timezone=args.no_timezone, date=args.date)
+  def get_timezone (self, args):
+    tz = None
+    if not args.no_timezone:
+      tz = gettz(args.timezone)
+    return tz
+  def main (self, args, app):
+
+    params = self.get_params(args)
+    self.tz = self.get_timezone(args)
+    def get (item):
+      return parse(item.get(args.date))
+
+    gaps = [ ]
+    if args.gaps:
+      spec = json.load(argparse.FileType('r')(args.gaps))
+      gaps.extend(spec)
+    else:
+      prev = self.get_prelude(args)
+      curr = self.get_postlude(args)
+      gap = dict(current=None, prev=None, delta=None)
+      gap[args.date] = None
+      spec = [ ]
+      if prev and curr:
+        delta = get(prev) - get(curr)
+        gap = dict(current=curr[args.date], prev=prev[args.date], delta=delta.total_seconds( ))
+        gap[args.date] = curr[args.date]
+        spec = [gap]
+      else:
+        if prev:
+          gap.update(prev=prev[args.date])
+          gap[args.date] = prev[args.date]
+        if curr:
+          gap.update(current=curr[args.date])
+          gap[args.date] = curr[args.date]
+        spec = [gap]
+      gaps.extend(spec)
+
+    results = [ ]
+    for gap in gaps:
+      spec = Gap(**gap)
+
+      for stream in params.get('input'):
+        data = json.load(argparse.FileType('r')(stream))
+        for elem in data:
+          if spec.includes(get(elem)):
+            results.append(elem)
+    return results
+
+  def get_prelude (self, args):
+    tz = self.tz
+    if args.prev:
+      dt = parse_datetime(args.prev).replace(tzinfo=tz)
+      if tz:
+        dt = dt.astimezone(tz)
+      prev = {args.date: dt.isoformat( ), dt: dt}
+      return prev
+
+  def get_postlude (self, args):
+    tz = self.tz
+    if args.current:
+      dt = parse_datetime(args.current).replace(tzinfo=tz)
+      if tz:
+        dt = dt.astimezone(tz)
+      current = {args.date: dt.isoformat( ), dt: dt}
+      return current
+      # all_data.append(after)
+
+class Gap (object):
+  prev = None
+  curr = None
+  def __init__ (self, prev=None, current=None, **kwds):
+    self.props = dict(prev=prev, current=current, **kwds)
+    if prev:
+      self.prev = parse(prev)
+    if current:
+      self.curr = parse(current)
+  def includes (self, when):
+    if self.prev and self.curr:
+      if self.prev <= when and when <= self.curr:
+        return True
+    else:
+      if self.prev:
+        if self.prev <= when:
+          return True
+      if self.curr:
+        if when <= self.curr:
+          return True
+    return False
 
 def get_uses (device, config):
   all_uses = use.get_uses(device, config)
