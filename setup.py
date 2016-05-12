@@ -7,11 +7,11 @@ This package is a virtual namespace for openaps.contrib modules.
 
 '''
 
-requires = [ ]
+requires = ['recurrent']
 
 setup(
     name='openaps-contrib',
-    version='0.0.8',
+    version='0.0.9',
     url='http://github.com/openaps/openaps-contrib',
     download_url='http://pypi.python.org/pypi/openaps-contrib',
     license='MIT',
