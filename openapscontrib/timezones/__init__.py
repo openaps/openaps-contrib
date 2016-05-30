@@ -147,7 +147,24 @@ class lsgaps (Use):
     parser.add_argument('--timezone','-z', default=None)
     parser.add_argument('--no-timezone', action='store_true', default=False)
   def get_params (self, args):
-    return dict(input=args.input, minutes=args.minutes, date=args.date)
+    return dict(input=args.input, minutes=args.minutes, date=args.date,
+                before=args.before, after=args.after, timezone=args.timezone, no_timezone=args.no_timezone)
+  def to_ini (self, args):
+    params = self.get_params(args)
+    params['input'] = ' '.join(args.input)
+    for field in params.keys( ):
+      if params[field] is None:
+        params[field] = ''
+    return params
+  def from_ini (self, fields):
+    if 'input' in fields:
+      fields['input'] = fields['input'].split(' ')
+    for field in fields:
+      if fields[field] in ['False', ]:
+        fields[field] = False
+      if fields[field] in ['', None]:
+        fields[field] = None
+    return fields
   def main (self, args, app):
     params = self.get_params(args)
     for x in params.keys( ):
