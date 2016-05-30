@@ -209,11 +209,11 @@ class select (Use):
     parser.add_argument('--prev',  default=None)
     parser.add_argument('--gaps',  default=None)
     parser.add_argument('--timezone','-z', default=None)
-    parser.add_argument('--no-timezone', action='store_true', default=False)
+    parser.add_argument('--no-timezone', action='store_true',  default=False)
 
   def to_ini (self, args):
     params = self.get_params(args)
-    params['input'] = args.input.join(' ')
+    params['input'] = ' '.join(args.input)
     for field in params.keys( ):
       if params[field] is None:
         params[field] = ''
@@ -222,11 +222,15 @@ class select (Use):
     if 'input' in fields:
       fields['input'] = fields['input'].split(' ')
     for field in fields:
+      if fields[field] in ['False', ]:
+        fields[field] = False
       if fields[field] in ['', None]:
         fields[field] = None
     return fields
   def get_params (self, args):
-    return dict(input=args.input, timezone=args.timezone, no_timezone=args.no_timezone, date=args.date)
+    return dict(input=args.input, timezone=args.timezone,
+                no_timezone=args.no_timezone, date=args.date,
+                gaps=args.gaps, current=args.current, prev=args.prev)
   def get_timezone (self, args):
     tz = None
     if not args.no_timezone:
