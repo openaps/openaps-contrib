@@ -45,11 +45,14 @@ class ConvertInput (Use):
     fields['astimezone'] = fields.get('astimezone', False) is 'True'
     return fields
   def get_params (self, args):
-    return dict(input=args.input, timezone=args.timezone, adjust=args.adjust, date=args.date, astimezone=args.astimezone)
+    fields = args.date
+    if fields == []:
+      fields = self.FIELDNAME
+    return dict(input=args.input, timezone=args.timezone, adjust=args.adjust, date=fields, astimezone=args.astimezone)
   def configure_app (self, app, parser):
     parser.add_argument('--timezone','-z', default=gettz( ), type=gettz)
     parser.add_argument('--adjust','-a', default='missing', choices=['missing', 'replace'])
-    parser.add_argument('--date','-d', action='append', default=self.FIELDNAME)
+    parser.add_argument('--date','-d', action='append', default=[])
     parser.add_argument('--astimezone','-r', action='store_true',  default=False)
     parser.add_argument('input', default='-')
   def get_program (self, args):
