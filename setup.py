@@ -11,7 +11,7 @@ requires = ['recurrent']
 
 setup(
     name='openaps-contrib',
-    version='0.0.14',
+    version='0.0.15',
     url='http://github.com/openaps/openaps-contrib',
     download_url='http://pypi.python.org/pypi/openaps-contrib',
     license='MIT',
