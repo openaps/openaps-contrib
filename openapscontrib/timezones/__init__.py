@@ -42,7 +42,7 @@ class ConvertInput (Use):
     else:
       zone = gettz(zone)
     fields['timezone'] = zone
-    fields['astimezone'] = fields.get('astimezone', False) is 'True'
+    fields['astimezone'] = fields.get('astimezone', False) == 'True'
     return fields
   def get_params (self, args):
     fields = args.date
