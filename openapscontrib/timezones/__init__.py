@@ -31,8 +31,7 @@ class ConvertInput (Use):
     if args.timezone._filename == '/etc/localtime':
       params['timezone'] = ''
 
-    if args.date:
-      params['date'] = ' '.join(args.date)
+    params.update(date=' '.join(params.get('date')))
     return params
   def from_ini (self, fields):
     fields['date'] = fields['date'].split(' ')
@@ -94,7 +93,7 @@ class clock (ConvertInput):
   """
     Manage timezones of device clock.
   """
-  FIELDNAME = None
+  FIELDNAME = [ ]
   def get_date_value (self, record):
     return parse(record)
   def convert (self, program):
