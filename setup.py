@@ -7,7 +7,7 @@ This package is a virtual namespace for openaps.contrib modules.
 
 '''
 
-requires = ['recurrent']
+requires = ['parsedatetime==2.5', 'recurrent']
 
 setup(
     name='openaps-contrib',
